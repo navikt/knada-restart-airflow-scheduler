@@ -14,41 +14,53 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
+const schedulerName = "airflow-scheduler"
+const envLocal = "local"
+const envProd = "inCluster"
+
+func getNamespaceFromConfig(kubeconfigPath string) (string, error) {
+	configLoadingRules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: kubeconfigPath}
+	configOverrides := &clientcmd.ConfigOverrides{}
+	clientConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(configLoadingRules, configOverrides)
+	namespace, _, err := clientConfig.Namespace()
+	return namespace, err
+}
+
 func main() {
 	var deploymentName string
 	var namespace string
-	var kubeconfig string
+	var env string
 
-	flag.StringVar(&deploymentName, "deployment", "airflow-scheduler", "Name of the airflow scheduler deployment to restart")
+	flag.StringVar(&deploymentName, "deployment", schedulerName, "Name of the airflow scheduler deployment to restart")
 	flag.StringVar(&namespace, "namespace", "", "Namespace of the airflow scheduler deployment")
-	// Add kubeconfig flag
-	if home := homedir.HomeDir(); home != "" {
-		flag.StringVar(&kubeconfig, "kubeconfig", filepath.Join(home, ".kube", "config"), "(optional) absolute path to the kubeconfig file")
-	} else {
-		flag.StringVar(&kubeconfig, "kubeconfig", "", "absolute path to the kubeconfig file")
-	}
-	flag.Parse()
-
-	if namespace == "" {
-		panic("Namespace is required")
-	}
+	flag.StringVar(&env, "env", envLocal, "Environment running in")
 
 	var config *rest.Config
 	var err error
 
-	if kubeconfig != "" {
-		// Use the kubeconfig file from the flag
-		config, err = clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			panic(err.Error())
+	if env == envLocal {
+		if home := homedir.HomeDir(); home != "" {
+			configPath := filepath.Join(home, ".kube", "config")
+			config, err = clientcmd.BuildConfigFromFlags("", configPath)
+			if err != nil {
+				panic(err.Error())
+			}
+			if namespace == "" {
+				namespace, err = getNamespaceFromConfig(configPath)
+				if err != nil {
+					panic(err.Error())
+				}
+			}
+		} else {
+			panic("Home directory not found")
 		}
 	} else {
-		// Use in-cluster config
 		config, err = rest.InClusterConfig()
 		if err != nil {
 			panic(err.Error())
 		}
 	}
+
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
@@ -57,7 +69,7 @@ func main() {
 	deploymentClient := clientset.AppsV1().Deployments(namespace)
 
 	// Get the deployment
-	deployment, err := deploymentClient.Get(context.TODO(), deploymentName, metav1.GetOptions{})
+	deployment, err := deploymentClient.Get(context.Background(), deploymentName, metav1.GetOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
