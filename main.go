@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
 	"path/filepath"
 	"time"
 
@@ -34,6 +35,7 @@ func main() {
 	flag.StringVar(&deploymentName, "deployment", schedulerName, "Name of the airflow scheduler deployment to restart")
 	flag.StringVar(&namespace, "namespace", "", "Namespace of the airflow scheduler deployment")
 	flag.StringVar(&env, "env", envLocal, "Environment running in")
+	flag.Parse()
 
 	var config *rest.Config
 	var err error
@@ -61,6 +63,8 @@ func main() {
 		}
 	}
 
+	log.Printf("Restarting airflow scheduler in namespace %s, deploymentName %s\n", namespace, deploymentName)
+
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		panic(err.Error())
@@ -78,7 +82,7 @@ func main() {
 	if deployment.Spec.Template.ObjectMeta.Annotations == nil {
 		deployment.Spec.Template.ObjectMeta.Annotations = make(map[string]string)
 	}
-	deployment.Spec.Template.ObjectMeta.Annotations["kubectl.kubernetes.io/restartedAt"] = time.Now().Format(time.RFC3339)
+	deployment.Spec.Template.ObjectMeta.Annotations["knada/restartedAt"] = time.Now().Format(time.RFC3339)
 
 	// Update the deployment
 	_, err = deploymentClient.Update(context.TODO(), deployment, metav1.UpdateOptions{})

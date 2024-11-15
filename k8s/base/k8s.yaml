@@ -1,0 +1,72 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: restart-airflow
+  namespace: team-meng-test-4251
+spec:
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: Never
+          serviceAccountName: deployment-edit-sa
+          containers:
+          - name: restart-airflow
+            image: europe-north1-docker.pkg.dev/knada-gcp/knada-north/knada-restart-scheduler
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deployment-edit-sa
+  namespace: team-meng-test-4251
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployment-edit-role
+  namespace: team-meng-test-4251
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get", "update"]
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployment-edit-binding
+  namespace: team-meng-test-4251
+subjects:
+  - kind: ServiceAccount
+    name: deployment-edit-sa
+    namespace: team-meng-test-4251
+roleRef:
+  kind: Role
+  name: deployment-edit-role
+  apiGroup: rbac.authorization.k8s.io
+---
+
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: allow-api-server
+  namespace: team-meng-test-4251
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 100.72.0.1/32
+        - ipBlock:
+            cidr: 172.16.0.16/28
+      ports:
+        - protocol: TCP
+          port: 443
