@@ -1,4 +1,4 @@
-name: Build and push expired-cert-notify image to GAR
+name: Build and push knada-restart-scheduler image to GAR
 
 on:
   push:
