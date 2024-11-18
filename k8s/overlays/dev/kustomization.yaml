@@ -5,21 +5,21 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: europe-north1-docker.pkg.dev/knada-gcp/knada-north/knada-restart-scheduler
-  newTag: 52ccd3e9168170fc130fdc2c3b3eb9f018a0b306
+  newTag: b3852563535e2ee55440143282cf09db6ef9220a
 patches:
-  - target:
-      kind: NetworkPolicy
+- patch: |-
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
       name: allow-api-server
-    patch: |-
-      apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata:
-        name: allow-api-server
-      spec:
-        egress:
-          - to:
-              - ipBlock:
-                  cidr: 100.72.0.1/32
-            ports:
-              - protocol: TCP
-                port: 443
+    spec:
+      egress:
+        - to:
+            - ipBlock:
+                cidr: 100.72.0.1/32
+          ports:
+            - protocol: TCP
+              port: 443
+  target:
+    kind: NetworkPolicy
+    name: allow-api-server
