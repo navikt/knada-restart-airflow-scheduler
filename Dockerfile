@@ -16,4 +16,4 @@ RUN go build -o restart-scheduler .
 FROM alpine:3
 WORKDIR /app
 COPY --from=builder /src/restart-scheduler /app/restart-scheduler
-CMD ["/app/restart-scheduler", "--env=inCluster", "--namespace=team-meng-test-4251"]
+CMD ["/app/restart-scheduler", "--env=inCluster"]

@@ -11,10 +11,10 @@ spec:
   jobTemplate:
     spec:
       template:
+        metadata:
+          labels:
+            app: restart-airflow        
         spec:
-          metadata:
-            labels:
-              app: restart-airflow        
           restartPolicy: Never
           serviceAccountName: deployment-edit-sa
           containers:
