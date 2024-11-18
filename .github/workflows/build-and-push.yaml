@@ -44,11 +44,12 @@ jobs:
       run: |
         kustomize edit set image ${{ env.IMAGE }}
 
-#    - name: Update imagetag in prod k8s manifest
-#      if: github.ref == 'refs/heads/main'
-#      working-directory: k8s/overlays/prod
-#      run: |
-#        kustomize edit set image ${{ env.IMAGE }}
+    - name: Update imagetag in prod k8s manifest
+      if: github.ref == 'refs/heads/main'
+      working-directory: k8s/overlays/prod
+      run: |
+        kustomize edit set image ${{ env.IMAGE }}
+
     - name: Commit tag changes
       if: github.ref == 'refs/heads/main'
       run: |
