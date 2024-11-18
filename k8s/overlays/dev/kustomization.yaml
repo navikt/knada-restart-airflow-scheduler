@@ -5,4 +5,4 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
 - name: europe-north1-docker.pkg.dev/knada-gcp/knada-north/knada-restart-scheduler
-  newTag: cddd727bc797745f5c501a904eb0845fc12c94b5
+  newTag: c56aa799cdbc393abd33b97ea231a785c6d18d94
